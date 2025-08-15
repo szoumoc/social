@@ -10,6 +10,8 @@ import (
 	"github.com/szoumoc/social/internal/store"
 )
 
+const version = " 0.0.1"
+
 type application struct {
 	config config
 	store  store.Storage
@@ -18,11 +20,12 @@ type application struct {
 type config struct {
 	addr string
 	db   dbConfig
+	env  string
 }
 
 type dbConfig struct {
 	addr         string
-	maxOpenConns  int
+	maxOpenConns int
 	maxIdleConns int
 	maxIdleTime  string
 }
