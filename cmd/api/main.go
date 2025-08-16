@@ -19,6 +19,7 @@ func main() {
 		},
 		env: env.GetString("ENV", "development"),
 	}
+	log.Printf("Connecting to DB: %s", cfg.db.addr)
 
 	db, err := db.New(
 		cfg.db.addr,
