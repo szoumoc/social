@@ -11,7 +11,7 @@ type Comment struct {
 	UserID    int64  `json:"user_id"`
 	Content   string `json:"content"`
 	CreatedAt string `json:"created_at"`
-	User      User  `json:"user"`
+	User      User   `json:"user"`
 }
 
 type CommentStore struct {
@@ -26,6 +26,8 @@ func (s *CommentStore) GetByPostID(ctx context.Context, postID int64) ([]Comment
 		WHERE c.post_id = $1
 		ORDER BY c.created_at DESC
 	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 	rows, err := s.db.QueryContext(ctx, query, postID)
 	if err != nil {
 		return nil, err
