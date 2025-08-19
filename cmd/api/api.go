@@ -44,7 +44,7 @@ func (app *application) mount() *chi.Mux {
 		r.Get("/health", app.healthCheckHandler)
 		r.Route("/posts", func(r chi.Router) {
 			r.Post("/", app.createPostHandler)
-			r.Route("/{postID}", func(r chi.Router){
+			r.Route("/{postID}", func(r chi.Router) {
 				r.Use(app.postsContextMiddleware)
 				r.Get("/", app.getPostHandler)
 				r.Delete("/", app.deletePostHandler)
@@ -53,7 +53,10 @@ func (app *application) mount() *chi.Mux {
 		})
 		r.Route("/users", func(r chi.Router) {
 			r.Route("/{userID}", func(r chi.Router) {
+				r.Use(app.userContextMiddleware)
 				r.Get("/", app.getUserHandler)
+				r.Put("/follow", app.followUserHandler)
+				r.Put("/unfollow", app.unfollowUserHandler)
 			})
 		})
 	})
