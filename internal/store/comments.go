@@ -5,6 +5,9 @@ import (
 	"database/sql"
 )
 
+// Comment represents a comment in the system.
+// @Description Comment model
+// @name Comment
 type Comment struct {
 	ID        int64  `json:"id"`
 	PostID    int64  `json:"post_id"`

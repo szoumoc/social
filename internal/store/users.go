@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 )
-
+// User represents a user in the system.
+// @Description User model
+// @name User
 type User struct {
 	ID        int64  `json:"id"`
 	Username  string `json:"username"`

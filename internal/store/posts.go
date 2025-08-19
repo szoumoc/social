@@ -8,6 +8,9 @@ import (
 	"github.com/lib/pq"
 )
 
+// Post represents a post in the system.
+// @Description Post model
+// @name Post
 type Post struct {
 	ID        int64     `json:"id"`
 	Content   string    `json:"content"`

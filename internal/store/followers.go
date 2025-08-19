@@ -7,6 +7,9 @@ import (
 	"github.com/lib/pq"
 )
 
+// followers represents a follower in the system.
+// @Description Follower model
+// @name Follower
 type Follower struct {
 	UserID     int64  `json:"user_id"`
 	FollowerID int64  `json:"follower_id"`
@@ -26,7 +29,7 @@ func (s *FollowerStore) Follow(ctx context.Context, followerID, userID int64) er
 	defer cancel()
 
 	_, err := s.db.ExecContext(ctx, query, userID, followerID)
-	if err!= nil{
+	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 			return ErrConflict // Unique constraint violation
 		}
