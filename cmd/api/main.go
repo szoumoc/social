@@ -6,6 +6,7 @@ import (
 	"github.com/szoumoc/social/internal/db"
 	"github.com/szoumoc/social/internal/env"
 	"github.com/szoumoc/social/internal/store"
+	"go.uber.org/zap"
 )
 
 const version = " 0.0.1"
@@ -40,6 +41,12 @@ func main() {
 	}
 	log.Printf("Connecting to DB: %s", cfg.db.addr)
 
+	// Logger
+	logger := zap.Must(zap.NewProduction()).Sugar()
+	defer logger.Sync() // flushes buffer, if any
+
+	// Database
+
 	db, err := db.New(
 		cfg.db.addr,
 		cfg.db.maxOpenConns,
@@ -47,16 +54,18 @@ func main() {
 		cfg.db.maxIdleTime,
 	)
 	if err != nil {
-		log.Panic(err)
+		logger.Fatal(err)
 	}
 	defer db.Close()
-	log.Printf("db connected")
+	
+	logger.Info("db connected")
 	store := store.NewStorage(db)
 	app := &application{
 		config: cfg,
 		store:  store,
+		logger: logger,
 	}
 
 	mux := app.mount()
-	log.Fatal(app.run(mux))
+	logger.Fatal(app.run(mux))
 }
