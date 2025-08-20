@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/szoumoc/social/internal/db"
 	"github.com/szoumoc/social/internal/env"
@@ -38,6 +39,9 @@ func main() {
 			maxIdleTime:  env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
 		env: env.GetString("ENV", "development"),
+		mail: mailConfig{
+			exp: time.Hour * 24 * 3, //3 days
+		},
 	}
 	log.Printf("Connecting to DB: %s", cfg.db.addr)
 
@@ -57,7 +61,7 @@ func main() {
 		logger.Fatal(err)
 	}
 	defer db.Close()
-	
+
 	logger.Info("db connected")
 	store := store.NewStorage(db)
 	app := &application{

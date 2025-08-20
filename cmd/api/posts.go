@@ -23,7 +23,7 @@ type CreatePostPayload struct {
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	var payload CreatePostPayload
-	if err := ReadJson(w, r, &payload); err != nil {
+	if err := readJson(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
@@ -96,7 +96,7 @@ type UpdatePostPayload struct {
 func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromCtx(r)
 	var payload UpdatePostPayload
-	if err := ReadJson(w, r, &payload); err != nil {
+	if err := readJson(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
