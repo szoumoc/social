@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	// "github.com/szoumoc/social/docs"
+	"github.com/szoumoc/social/internal/mailer"
 	"github.com/szoumoc/social/internal/store"
 )
 
@@ -18,17 +19,26 @@ type application struct {
 	config config
 	store  store.Storage
 	logger *zap.SugaredLogger
+	mailer mailer.Client
 }
 
 type config struct {
-	addr string
-	db   dbConfig
-	env  string
-	mail mailConfig
+	addr        string
+	db          dbConfig
+	env         string
+	mail        mailConfig
+	apiURL      string
+	frontendURL string
 }
 
 type mailConfig struct {
-	exp time.Duration
+	sendGrid  sendGridConfig
+	fromEmail string
+	exp       time.Duration
+}
+
+type sendGridConfig struct {
+	apiKey string
 }
 
 type dbConfig struct {
