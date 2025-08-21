@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log"
 	"math/rand"
@@ -58,23 +59,24 @@ var tags = []string{
 	"Real-time", "Event-driven", "Game Development", "Scalability",
 }
 
-func Seed(store store.Storage) {
+func Seed(store store.Storage, db *sql.DB) {
 	ctx := context.Background()
 	users := generateUsers(100)
+	tx, _ := db.BeginTx(ctx, nil)
 
 	for _, user := range users {
-		if err := store.Users.Create(ctx, user); err != nil {
-			continue
-			// log.Printf("failed to create user: %v", err)
-			// return
+		if err := store.Users.Create(ctx, tx, user); err != nil {
+			_ = tx.Rollback()
+			log.Printf("failed to create user: %v", err)
+			return
 		}
 	}
+	tx.Commit()
 	posts := generatePosts(200, users)
 	for _, post := range posts {
 		if err := store.Posts.Create(ctx, post); err != nil {
-			continue
-			// log.Printf("failed to create post: %v", err)
-			// return
+			log.Printf("failed to create post: %v", err)
+			return
 		}
 	}
 	comments := generateComments(500, users, posts)

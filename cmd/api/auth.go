@@ -12,7 +12,12 @@ import (
 type RegisterUserPayload struct {
 	Username string `json:"username" validate:"required,max=100"`
 	Email    string `json:"email" validate:"required,email,max=255"`
-	Password string `json:"password" validate:"required,mix=3,max=72"`
+	Password string `json:"password" validate:"required,min=3,max=72"`
+}
+
+type UserWithToken struct {
+	*store.User
+	Token string `json:"token"`
 }
 
 // registerUserHandler godoc
@@ -30,7 +35,7 @@ type RegisterUserPayload struct {
 
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload RegisterUserPayload
-	if err := readJson(w, r, payload); err != nil {
+	if err := readJson(w, r, &payload); err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
@@ -68,10 +73,13 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		}
 		return
 	}
-
+	userWithToken := UserWithToken{
+		User:  user,
+		Token: plainToken,
+	}
 	//mail
 	//here if it fails we gonna roll back the actions we just did
-	if err := app.jsonResponse(w, r, http.StatusCreated, nil); err != nil {
+	if err := app.jsonResponse(w, r, http.StatusCreated, userWithToken); err != nil {
 		app.internalServerError(w, r, err)
 	}
 

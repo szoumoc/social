@@ -16,5 +16,5 @@ func main() {
 	}
 	defer conn.Close()
 	store := store.NewStorage(conn) // Assuming db is your *sql.DB instance
-	db.Seed(store)
+	db.Seed(store, conn)
 }
