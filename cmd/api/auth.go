@@ -90,7 +90,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		Username:      user.Username,
 		ActivationURL: activationURL,
 	}
-	err = app.mailer.Send(mailer.UserWelcomeTemplate, user.Username, user.Email, vars, !isProdEnv)
+	status, err := app.mailer.Send(mailer.UserWelcomeTemplate, user.Username, user.Email, vars, !isProdEnv)
 	if err != nil {
 		app.logger.Errorw("error sending welcome email", "email", err)
 		//rollback user creation if email fails (SAGA pattern)
@@ -102,6 +102,7 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	//here if it fails we gonna roll back the actions we just did
+	app.logger.Infow("Email sent", "status code", status)
 	if err := app.jsonResponse(w, r, http.StatusCreated, userWithToken); err != nil {
 		app.internalServerError(w, r, err)
 	}
