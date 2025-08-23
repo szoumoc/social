@@ -12,15 +12,17 @@ import (
 	"go.uber.org/zap"
 
 	// "github.com/szoumoc/social/docs"
+	"github.com/szoumoc/social/internal/auth"
 	"github.com/szoumoc/social/internal/mailer"
 	"github.com/szoumoc/social/internal/store"
 )
 
 type application struct {
-	config config
-	store  store.Storage
-	logger *zap.SugaredLogger
-	mailer mailer.Client
+	config        config
+	store         store.Storage
+	logger        *zap.SugaredLogger
+	mailer        mailer.Client
+	authenticator auth.Authenticator
 }
 
 type config struct {
@@ -35,6 +37,12 @@ type config struct {
 
 type authConfig struct {
 	basic basicConfig
+	token tokenConfig
+}
+type tokenConfig struct {
+	secret string
+	exp    time.Duration
+	iss    string
 }
 
 type basicConfig struct {
@@ -110,6 +118,7 @@ func (app *application) mount() *chi.Mux {
 		//PUBLIC ROUTES
 		r.Route("/authentication", func(r chi.Router) {
 			r.Post("/user", app.registerUserHandler)
+			r.Post("/token", app.createTokenHandler)
 		})
 	})
 

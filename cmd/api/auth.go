@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/szoumoc/social/internal/mailer"
 	"github.com/szoumoc/social/internal/store"
@@ -107,4 +109,66 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		app.internalServerError(w, r, err)
 	}
 
+}
+
+type CreateUserTokenPayload struct {
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Password string `json:"password" validate:"required,min=3,max=255"`
+}
+
+// createTokenHandler godoc
+//
+// @summary Creates a token
+// @Description Creates a token for a user
+// @Tags authentication
+// @Accept json
+// @Produce json
+// @param payload body CreateUserTokenPayload true "User credentials"
+// @Success 200 {string} string "Token"
+// @failure 400 {string} error
+// @failure 401 {string} error
+// @failure 500 {string} error
+func (app *application) createTokenHandler(w http.ResponseWriter, r *http.Request) {
+	var payload CreateUserTokenPayload
+
+	// parse payload credentials
+	if err := readJson(w, r, &payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	if err := Validate.Struct(payload); err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+	// fetch the user(Check if the user exist) from the payload
+	user, err := app.store.Users.GetByEmail(r.Context(), payload.Email)
+	if err != nil {
+		switch err {
+		case store.ErrNotFound:
+			app.unauthorizedErrorResponse(w, r, err)
+		default:
+			app.internalServerError(w, r, err)
+		}
+		return
+	}
+
+	//	generate the token -> add claims
+	claims := jwt.MapClaims{
+		"sub": user.ID,
+		"exp": time.Now().Add(app.config.auth.token.exp).Unix(),
+		"iat": time.Now().Unix(),
+		"nbf": time.Now().Unix(),
+		"iss": app.config.auth.token.iss,
+		"aud": app.config.auth.token.iss,
+	}
+	token, err := app.authenticator.GenerateToken(claims)
+	if err != nil {
+		app.internalServerError(w, r, err)
+		return
+	}
+
+	// send it to the client
+	if err := app.jsonResponse(w, r, http.StatusCreated, token); err != nil {
+		app.internalServerError(w, r, err)
+	}
 }
