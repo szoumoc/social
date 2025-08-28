@@ -19,6 +19,7 @@ import (
 	// "github.com/szoumoc/social/docs"
 	"github.com/szoumoc/social/internal/auth"
 	"github.com/szoumoc/social/internal/mailer"
+	"github.com/szoumoc/social/internal/ratelimiter"
 	"github.com/szoumoc/social/internal/store"
 )
 
@@ -28,6 +29,7 @@ type application struct {
 	logger        *zap.SugaredLogger
 	mailer        mailer.Client
 	authenticator auth.Authenticator
+	rateLimiter   ratelimiter.Limiter
 }
 
 type config struct {
@@ -38,6 +40,7 @@ type config struct {
 	// apiURL      string
 	frontendURL string
 	auth        authConfig
+	rateLimiter ratelimiter.Config
 }
 
 type authConfig struct {
@@ -83,6 +86,7 @@ func (app *application) mount() *chi.Mux {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(app.RateLimiterMiddleware)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},

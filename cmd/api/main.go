@@ -8,6 +8,7 @@ import (
 	"github.com/szoumoc/social/internal/db"
 	"github.com/szoumoc/social/internal/env"
 	"github.com/szoumoc/social/internal/mailer"
+	"github.com/szoumoc/social/internal/ratelimiter"
 	"github.com/szoumoc/social/internal/store"
 	"go.uber.org/zap"
 )
@@ -44,12 +45,12 @@ func main() {
 		env: env.GetString("ENV", "development"),
 		mail: mailConfig{
 			exp:       time.Hour * 24 * 3, //3 days
-			fromEmail: env.GetString("FROM_EMAIL", ""),
+			fromEmail: env.GetString("FROM_EMAIL", "hello@demomailtrap.co"),
 			sendGrid: sendGridConfig{
 				apiKey: env.GetString("SENDGRID_API_KEY", ""),
 			},
 			mailTrap: mailTrapConfig{
-				apiKey: env.GetString("MAILTRAP_API_KEY", ""),
+				apiKey: env.GetString("MAILTRAP_API_KEY", "8344d666a1d199a460b907383d17e4e4"),
 			},
 		},
 		auth: authConfig{
@@ -62,6 +63,11 @@ func main() {
 				exp:    time.Hour * 24 * 3, //3days
 				iss:    "szoumosocial",
 			},
+		},
+		rateLimiter: ratelimiter.Config{
+			RequestPerTimeFrame: env.GetInt("RATELIMITER_REQUEST_COUNT", 20),
+			TimeFrame:           time.Second * 5,
+			Enabled:             env.GetBool("RATE_LIMITER_ENABLED", true),
 		},
 	}
 	log.Printf("Connecting to DB: %s", cfg.db.addr)
@@ -86,6 +92,11 @@ func main() {
 	logger.Info("db connected")
 	store := store.NewStorage(db)
 
+	ratelimiter := ratelimiter.NewFixedWindowLimiter(
+		cfg.rateLimiter.RequestPerTimeFrame,
+		cfg.rateLimiter.TimeFrame,
+	)
+
 	// mailer := mailer.NewSendgrid(cfg.mail.sendGrid.apiKey, cfg.mail.fromEmail)
 	mailTrap, err := mailer.NewMailTrapClient(cfg.mail.mailTrap.apiKey, cfg.mail.fromEmail)
 	if err != nil {
@@ -103,6 +114,7 @@ func main() {
 		logger:        logger,
 		mailer:        mailTrap,
 		authenticator: jwtAuthenticator,
+		rateLimiter:   ratelimiter,
 	}
 
 	mux := app.mount()
